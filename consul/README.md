@@ -7,10 +7,13 @@ Consul Cluster of 3 docker containers
 2) Install consul on each of them:
 
    wget https://releases.hashicorp.com/consul/0.6.3/consul_0.6.3_linux_amd64.zip
+   
    unzip consul_0.6.3_linux_amd64.zip
+   
    mv consul /usr/local/bin/
 
 3) Create consul config directory where we'll keep configuration files:
+   
    mkdir /etc/consul.d
 
 4) Get IP of your docker containers and note it: docker inspect <container-name> | grep IP
@@ -45,6 +48,7 @@ Note: You can also copy the content from config.json file.
 Note: You can also copy the content from config1.json file.
 
 7) Now on the 1st server, lets start consual agent:
+   
    consul agent -config-dir=/etc/consul.d &
 
 8) After that, issue above command on rest of containers
@@ -91,8 +95,10 @@ Note: You can also copy the content from agent-config.json file.
 Note: You will see a message saying mysql service synced
 
 5) Also it will join servers, and if you issue this command:
+   
    consul members
- Note: you must see 4 members
+ 
+   Note: you must see 4 members
 
 Info: By default consul services will be resolved by this type of url: <service name>.consul.service. So here the service name will be: mysql.service.consul
 
@@ -101,6 +107,7 @@ Info: By default consul services will be resolved by this type of url: <service 
    dig @127.0.0.1 -p 8600 mysql2.service.consul
 
 8) If you do not have dig, install it using:
+   
    apt-get install dnsutils
 
 
@@ -111,12 +118,14 @@ Dnsmasq
 Now we'll setup a dns forwarder on client so that all requests ending with consul could be forwarded to consul's dns server for resolution
 
 1) We'll use dnsmasq forwarder, Install it using:
+   
    apt-get install dnsmasq
 
 
 2) Configure dnsmasq to forward all request from default dns port 53 to 8600 if service name ends with consul.
 
 3) For this first open dnsmasq configuration file /etc/dnsmasq.conf and at last place this line:
+   
    user=root
 
 4) Now we'll create a config file which will do the required forwarding:
@@ -126,6 +135,7 @@ Now we'll setup a dns forwarder on client so that all requests ending with consu
    server=/consul/127.0.0.1#8600
 
 6) start dnsmasq:
+   
    service dnsmasq start
 
 Execute the command: dig @127.0.0.1 mysql.service.consul
