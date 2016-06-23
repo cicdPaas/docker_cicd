@@ -7,13 +7,13 @@ Consul Cluster of 3 docker containers
 2) Install consul on each of them:
 
    wget https://releases.hashicorp.com/consul/0.6.3/consul_0.6.3_linux_amd64.zip
-   
+
    unzip consul_0.6.3_linux_amd64.zip
-   
+
    mv consul /usr/local/bin/
 
 3) Create consul config directory where we'll keep configuration files:
-   
+
    mkdir /etc/consul.d
 
 4) Get IP of your docker containers and note it: docker inspect <container-name> | grep IP
@@ -27,6 +27,9 @@ Consul Cluster of 3 docker containers
 "node_name" : "<node name>",
 "server" : true,
 "bootstrap_expect" : 3,
+"ports": {
+    "dns": 53
+  },
 "bind_addr" : "<ip of docker container>"
 }
 
@@ -41,14 +44,17 @@ Note: You can also copy the content from config.json file.
 "node_name" : "<name of node>",
 "server" : true,
 "bootstrap_expect" : 3,
-"bind_addr" : "<ip of container>",
+"ports": {
+    "dns": 53
+  },
+"bind_addr" : "<ip of docker container>",
 "start_join" : ["<ip of first server>"]
 }
 
 Note: You can also copy the content from config1.json file.
 
 7) Now on the 1st server, lets start consual agent:
-   
+
    consul agent -config-dir=/etc/consul.d &
 
 8) After that, issue above command on rest of containers
@@ -56,6 +62,7 @@ Note: You can also copy the content from config1.json file.
 Note: Now you can see that all servers are in sync and they will elect a leader.
 
 9) Issue below command to see cluster members:
+
    consul members
 
 Result:::: Now we have a HA consul cluster.
@@ -64,7 +71,9 @@ Result:::: Now we have a HA consul cluster.
 Clients with service
 ------------------------------------
 
-Now we will launch another ubuntu docker container in which we'll launch a consul agent (as we did above) and run it in client mode
+Now we will launch another ubuntu docker container in which we'll launch a consul agent (as we did above) and run it in 
+
+client mode
 
 1) Create config.json in /etc/consul.d:
 
@@ -74,7 +83,13 @@ Now we will launch another ubuntu docker container in which we'll launch a consu
 "log_level" : "INFO",
 "node_name" : "<node-name>",
 "server" : false,
-"bind_addr" : "<container ip>",
+"addresses": {
+    "dns": "<ip of docker container>"
+  },
+"ports": {
+    "dns": 53
+  },
+"bind_addr" : "<ip of docker container>",
 "start_join" : ["<first server ip>"]
 }
 
@@ -86,7 +101,10 @@ Note: You can also copy the content from agent-config.json file.
 
 3) We'll create a config file for defining a service, name it mysql.json and create it in /etc/consul.d:
 
-{"service": {"name": "mysql", "tags": ["mysql"], "port": 3306}}
+{"service": {"name": "mysql", "tags": ["mysql"], "port": 3306,
+ "check": {"script": "curl localhost:3306 >/dev/null 2>&1", "interval": "10s"}}
+
+ Note: Here, we are checking the health of mysql service on every 10 seconds.
 
 4) Now start consul agent:
 
@@ -95,59 +113,27 @@ Note: You can also copy the content from agent-config.json file.
 Note: You will see a message saying mysql service synced
 
 5) Also it will join servers, and if you issue this command:
-   
+
    consul members
- 
-   Note: you must see 4 members
 
-Info: By default consul services will be resolved by this type of url: <service name>.consul.service. So here the service name will be: mysql.service.consul
+ Note: you must see 4 members
 
-7) Here, Consul runs its own dns server to resolve services at port 8600. So, we'll try to resolve this service by using dig:
+Info: By default consul services will be resolved by this type of url: <service name>.consul.service. So here the service 
 
-   dig @127.0.0.1 -p 8600 mysql2.service.consul
+name will be: mysql.service.consul
 
-8) If you do not have dig, install it using:
-   
-   apt-get install dnsutils
+7) Open /etc/resolv.conf and add "nameserver <ip of docker container>". Save and exit.
 
+Note: We made this entry because we started consul agent for dns on IP of the container and the port is 53.
 
-----------
-Dnsmasq
-----------
+8) You can check this by netstat -tunlp command.  
 
-Now we'll setup a dns forwarder on client so that all requests ending with consul could be forwarded to consul's dns server for resolution
+9) So, we'll try to resolve this service by using dig:
 
-1) We'll use dnsmasq forwarder, Install it using:
-   
-   apt-get install dnsmasq
+   dig mysql.service.consul
 
 
-2) Configure dnsmasq to forward all request from default dns port 53 to 8600 if service name ends with consul.
+This is how consul discovers service.
 
-3) For this first open dnsmasq configuration file /etc/dnsmasq.conf and at last place this line:
-   
-   user=root
-
-4) Now we'll create a config file which will do the required forwarding:
-
-5) Create a file: /etc/dnsmasq.d/10-consul and insert below line inside it:
-
-   server=/consul/127.0.0.1#8600
-
-6) start dnsmasq:
-   
-   service dnsmasq start
-
-Execute the command: dig @127.0.0.1 mysql.service.consul
-
-
-7) Make an additional entry in /etc/resolv.conf
-
-nameserver 127.0.0.1
-
-8) Save and exit
-
-9) Now, dig again without using port..
-
-dig mysql.service.consul
+For tesing, we can spin another container and make an entry of nameserver in /etc/resolv.conf of any container registered in consul cluster. This is to show you that we don't need consul agent just to discover services. 
 
