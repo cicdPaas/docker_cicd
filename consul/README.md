@@ -16,7 +16,7 @@ Consul Cluster of 3 docker containers
 
    mkdir /etc/consul.d
 
-4) Get IP of your docker containers and note it: docker inspect <container-name> | grep IP
+4) Get IP of your docker containers and note it: docker inspect "container-name" | grep IP
 
 5) Create 1st config file config.json at /etc/consul.d and paste the following content :
  
@@ -24,13 +24,13 @@ Consul Cluster of 3 docker containers
 "datacenter" : "dc1",
 "data_dir" : "/tmp/consul",
 "log_level" : "INFO",
-"node_name" : "<node name>",
+"node_name" : "node name",
 "server" : true,
 "bootstrap_expect" : 3,
 "ports": {
     "dns": 53
   },
-"bind_addr" : "<ip of docker container>"
+"bind_addr" : "ip of docker container"
 }
 
 Note: You can also copy the content from config.json file.
@@ -41,14 +41,14 @@ Note: You can also copy the content from config.json file.
 "datacenter" : "dc1",
 "data_dir" : "/tmp/consul",
 "log_level" : "INFO",
-"node_name" : "<name of node>",
+"node_name" : "name of node",
 "server" : true,
 "bootstrap_expect" : 3,
 "ports": {
     "dns": 53
   },
-"bind_addr" : "<ip of docker container>",
-"start_join" : ["<ip of first server>"]
+"bind_addr" : "ip of docker container",
+"start_join" : ["ip of first server"]
 }
 
 Note: You can also copy the content from config1.json file.
@@ -81,16 +81,16 @@ client mode
 "datacenter" : "dc1",
 "data_dir" : "/tmp/consul",
 "log_level" : "INFO",
-"node_name" : "<node-name>",
+"node_name" : "node-name",
 "server" : false,
 "addresses": {
-    "dns": "<ip of docker container>"
+    "dns": "ip of docker container"
   },
 "ports": {
     "dns": 53
   },
-"bind_addr" : "<ip of docker container>",
-"start_join" : ["<first server ip>"]
+"bind_addr" : "ip of docker container",
+"start_join" : ["first server ip"]
 }
 
 Note: You can also copy the content from agent-config.json file.
@@ -118,11 +118,11 @@ Note: You will see a message saying mysql service synced
 
  Note: you must see 4 members
 
-Info: By default consul services will be resolved by this type of url: <service name>.consul.service. So here the service 
+Info: By default consul services will be resolved by this type of url: service-name.consul.service. So here the service 
 
 name will be: mysql.service.consul
 
-7) Open /etc/resolv.conf and add "nameserver <ip of docker container>". Save and exit.
+7) Open /etc/resolv.conf and add "nameserver ip-of-docker-container". Save and exit.
 
 Note: We made this entry because we started consul agent for dns on IP of the container and the port is 53.
 
