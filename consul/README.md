@@ -40,3 +40,7 @@
   * consul agent -data-dir=/tmp/consul -node=server3 -server --bootstrap-expect=3  -join=172.17.0.8
 * Join the consul server running in server2 docker container
   * docker exec server2 consul join 172.17.0.8
+* Run consul agent with a web ui enabled
+  * docker run -it --rm --name agent1 -p 8500:8500 opstree/consul
+  * consul agent -data-dir=/tmp/consul -node=agent1 -join=172.17.0.8 -ui -client=0.0.0.0  
+  * docker port agent1
