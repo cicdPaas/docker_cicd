@@ -1,0 +1,7 @@
+FROM ubuntu
+
+ADD consul /usr/local/bin/
+
+
+# docker build -t opstree/consul -f Dockerfile.consul .
+# docker run -it --rm --name opstreeconsul opstree/consul
